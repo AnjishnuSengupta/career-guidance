@@ -1,5 +1,9 @@
+// Correct way to configure PostCSS with Tailwind
 const config = {
-  plugins: ["@tailwindcss/postcss"],
-};
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
 
 export default config;
