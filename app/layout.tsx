@@ -4,13 +4,14 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
-import { ThemeProvider } from "../components/theme-provider"
+import { ThemeProvider } from "@/components/theme-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "CareerCompass - Guidance for Class 11 & 12 Students",
   description: "Find your perfect career path based on your interests and skills",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
