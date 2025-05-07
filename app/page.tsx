@@ -41,6 +41,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
+import { VideoPlayer } from "@/components/video-player";
+import LoginPage from "@/components/login-page";
+import SignupPage from "@/components/signup-page"
+
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -54,9 +58,53 @@ export default function Home() {
     careers: string[]
     description: string
   }>(null)
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login")
+
+  const fetchCourseVideos = async (streamType = "") => {
+    setIsLoadingVideos(true);
+    try {
+      let query = "career guidance";
+      
+      if (streamType) {
+        const queryMap: Record<string, string> = {
+          "Science": "science career paths technology engineering mathematics",
+          "Commerce": "commerce business finance career paths",
+          "Humanities": "humanities social science career options",
+          "Arts & Design": "creative arts design career opportunities"
+        };
+        query = queryMap[streamType] || `${streamType} careers`;
+      }
+    
+      const response = await fetch(`/api/youtube?query=${encodeURIComponent(query)}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch videos from API');
+      }
+      
+      const data = await response.json();
+      setCourseVideos(data.items);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+    } finally {
+      setIsLoadingVideos(false);
+    }
+  };
+
+  // Add this after defining fetchCourseVideos
+  useEffect(() => {
+    // Load default videos when the page loads
+    fetchCourseVideos();
+  }, []);
 
   const [showFirstTimeModal, setShowFirstTimeModal] = useState(false)
-  const [courseVideos, setCourseVideos] = useState([])
+  const [courseVideos, setCourseVideos] = useState<Array<{
+    id: string;
+    title: string;
+    thumbnail?: string;
+    channelTitle: string;
+    publishedAt: string;
+    videoId: string;
+  }>>([])
   const [isLoadingVideos, setIsLoadingVideos] = useState(false)
   const [currentUniversityIndex, setCurrentUniversityIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
@@ -129,82 +177,9 @@ export default function Home() {
     }
   }, [isLoggedIn])
 
-  // Fetch YouTube videos
-  useEffect(() => {
-    const fetchCourseVideos = async () => {
-      // In a real implementation, this would use the actual YouTube API
-      // For this demo, we'll use mock data
-      setIsLoadingVideos(true)
-      try {
-        // Simulating API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-
-        // Mock video data
-        const mockVideos = [
-          {
-            id: "video1",
-            title: "Introduction to Computer Science",
-            thumbnail: "/placeholder.svg?height=180&width=320",
-            channelTitle: "Tech Academy",
-            publishedAt: "2023-05-15",
-            videoId: "dQw4w9WgXcQ",
-          },
-          {
-            id: "video2",
-            title: "Business Management Fundamentals",
-            thumbnail: "/placeholder.svg?height=180&width=320",
-            channelTitle: "Business School",
-            publishedAt: "2023-06-20",
-            videoId: "dQw4w9WgXcQ",
-          },
-          {
-            id: "video3",
-            title: "Psychology 101",
-            thumbnail: "/placeholder.svg?height=180&width=320",
-            channelTitle: "Mind Matters",
-            publishedAt: "2023-07-10",
-            videoId: "dQw4w9WgXcQ",
-          },
-          {
-            id: "video4",
-            title: "Introduction to Medical Sciences",
-            thumbnail: "/placeholder.svg?height=180&width=320",
-            channelTitle: "Medical Academy",
-            publishedAt: "2023-08-05",
-            videoId: "dQw4w9WgXcQ",
-          },
-          {
-            id: "video5",
-            title: "Engineering Principles",
-            thumbnail: "/placeholder.svg?height=180&width=320",
-            channelTitle: "Engineering Hub",
-            publishedAt: "2023-09-12",
-            videoId: "dQw4w9WgXcQ",
-          },
-          {
-            id: "video6",
-            title: "Law and Ethics",
-            thumbnail: "/placeholder.svg?height=180&width=320",
-            channelTitle: "Legal Studies",
-            publishedAt: "2023-10-18",
-            videoId: "dQw4w9WgXcQ",
-          },
-        ]
-
-        setCourseVideos(mockVideos)
-      } catch (error) {
-        console.error("Error fetching videos:", error)
-      } finally {
-        setIsLoadingVideos(false)
-      }
-    }
-
-    fetchCourseVideos()
-  }, [])
-
   // University carousel auto-rotation
   useEffect(() => {
-    let interval
+    let interval: NodeJS.Timeout | undefined
 
     if (!isPaused) {
       interval = setInterval(() => {
@@ -212,7 +187,9 @@ export default function Home() {
       }, 5000)
     }
 
-    return () => clearInterval(interval)
+    return () => {
+      if (interval) clearInterval(interval)
+    }
   }, [isPaused, universities.length])
 
   // Quiz questions
@@ -437,32 +414,45 @@ export default function Home() {
   // Handle quiz submission
   const handleQuizSubmit = () => {
     // Count the frequency of each answer type
-    const answerCounts = [0, 0, 0, 0]
+    const answerCounts = [0, 0, 0, 0];
     quizAnswers.forEach((answer) => {
-      answerCounts[answer]++
-    })
-
+      answerCounts[answer]++;
+    });
+  
     // Find the most common answer
-    let maxCount = 0
-    let maxIndex = 0
+    let maxCount = 0;
+    let maxIndex = 0;
     answerCounts.forEach((count, index) => {
       if (count > maxCount) {
-        maxCount = count
-        maxIndex = index
+        maxCount = count;
+        maxIndex = index;
       }
-    })
+    });
+  
+    // Get the quiz result based on the most common answer
+    const result = quizResults[maxIndex];
+    
+    // Set the result in state
+    setQuizResult(result);
+    setQuizStep(quizQuestions.length + 1);
+    
+    // Fetch YouTube videos based on the recommended stream
+    fetchCourseVideos(result.stream);
+  };
 
-    // Set the result based on the most common answer
-    setQuizResult(quizResults[maxIndex])
-    setQuizStep(quizQuestions.length + 1)
-  }
+// Handle login
+const handleLogin = (email: string, password: string) => {
+  console.log("Login attempt with:", email, password)
+  setIsLoggedIn(true)
+  setCurrentSection("home")
+}
 
-  // Handle login
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoggedIn(true)
-    setCurrentSection("home")
-  }
+// Handle signup
+const handleSignup = (email: string, password: string) => {
+  console.log("Signup with:", email, password)
+  setIsLoggedIn(true)
+  setCurrentSection("home")
+}
 
   // Handle logout
   const handleLogout = () => {
@@ -481,7 +471,25 @@ export default function Home() {
     } else {
       handleQuizSubmit()
     }
+  
   }
+
+  // Handle tab change for videos
+const handleTabChange = (value: string) => {
+  // Map tab values to stream names
+  const streamMap: Record<string, string> = {
+    "science": "Science",
+    "commerce": "Commerce",
+    "humanities": "Humanities"
+  };
+  
+  // If it's "all", fetch general videos, otherwise fetch stream-specific ones
+  if (value === "all") {
+    fetchCourseVideos();
+  } else if (streamMap[value]) {
+    fetchCourseVideos(streamMap[value]);
+  }
+};
 
   // Reset quiz
   const resetQuiz = () => {
@@ -610,83 +618,6 @@ export default function Home() {
         </div>
       )}
     </header>
-  )
-
-  // Login page
-  const LoginPage = () => (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      <div className="bg-purple-600 md:w-1/2 p-8 flex items-center justify-center">
-        <div className="text-white max-w-md">
-          <h1 className="text-4xl font-bold mb-4">Pathway</h1>
-          <p className="text-xl mb-6">Your journey to the perfect career starts here</p>
-          <ul className="space-y-2">
-            <li className="flex items-center">
-              <ChevronRight className="mr-2" size={18} />
-              Discover your ideal stream
-            </li>
-            <li className="flex items-center">
-              <ChevronRight className="mr-2" size={18} />
-              Explore suitable courses
-            </li>
-            <li className="flex items-center">
-              <ChevronRight className="mr-2" size={18} />
-              Find the best universities
-            </li>
-            <li className="flex items-center">
-              <ChevronRight className="mr-2" size={18} />
-              Plan your career path
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="bg-white md:w-1/2 p-8 flex items-center justify-center">
-        <div className="w-full max-w-md">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Login to Your Account</h2>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
-              </label>
-              <Input id="email" type="email" placeholder="your.email@example.com" required />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <Input id="password" type="password" placeholder="••••••••" required />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Remember me
-                </label>
-              </div>
-              <div className="text-sm">
-                <a href="#" className="font-medium text-purple-600 hover:text-purple-500">
-                  Forgot password?
-                </a>
-              </div>
-            </div>
-            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
-              Sign in
-            </Button>
-            <div className="text-center mt-4">
-              <span className="text-sm text-gray-600">Don't have an account? </span>
-              <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-500">
-                Sign up
-              </a>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
   )
 
   // Home section
@@ -951,12 +882,12 @@ export default function Home() {
           </div>
         </div>
 
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs defaultValue="all" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid grid-cols-3 mb-8 w-full max-w-md mx-auto">
-            <TabsTrigger value="all">All Courses</TabsTrigger>
-            <TabsTrigger value="science">Science</TabsTrigger>
-            <TabsTrigger value="commerce">Commerce</TabsTrigger>
-          </TabsList>
+          <TabsTrigger value="all">All Courses</TabsTrigger>
+          <TabsTrigger value="science">Science</TabsTrigger>
+          <TabsTrigger value="commerce">Commerce</TabsTrigger>
+        </TabsList>
 
           <TabsContent value="all" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course, index) => (
@@ -1506,45 +1437,32 @@ export default function Home() {
     </section>
   )
 
-  // Course Videos section
-  const CourseVideosSection = () => (
-    <section className="py-16 px-4 bg-gray-50">
-      <div className="container mx-auto">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Featured Course Videos</h2>
-
-        {isLoadingVideos ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courseVideos.map((video) => (
-              <Card key={video.id} className="overflow-hidden">
-                <div className="relative pb-[56.25%] h-0">
-                  <img
-                    src={video.thumbnail || "/placeholder.svg"}
-                    alt={video.title}
-                    className="absolute top-0 left-0 w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-white bg-opacity-80 rounded-full flex items-center justify-center cursor-pointer hover:bg-opacity-90 transition-all">
-                      <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-purple-600 border-b-8 border-b-transparent ml-1"></div>
-                    </div>
-                  </div>
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-lg mb-1 line-clamp-2">{video.title}</h3>
-                  <p className="text-gray-600 text-sm mb-2">{video.channelTitle}</p>
-                  <p className="text-gray-500 text-xs">{new Date(video.publishedAt).toLocaleDateString()}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-  )
+// Course Videos section
+const CourseVideosSection = () => (
+  <section className="py-16 px-4 bg-gray-50">
+    <div className="container mx-auto">
+      <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Featured Course Videos</h2>
+      {isLoadingVideos ? (
+        <div className="flex justify-center">
+          <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courseVideos.map((video) => (
+            <Card key={video.id} className="overflow-hidden">
+              <VideoPlayer videoId={video.videoId || video.id} title={video.title} />
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-lg mb-1 line-clamp-2">{video.title}</h3>
+                <p className="text-gray-600 text-sm mb-2">{video.channelTitle}</p>
+                <p className="text-gray-500 text-xs">{video.publishedAt}</p>
+              </CardContent>
+            </Card>
+      ))}
+        </div>
+      )}
+    </div>
+  </section>
+)
 
   // University Carousel section
   const UniversityCarouselSection = () => (
@@ -1697,11 +1615,20 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {currentSection === "login" ? (
-        <LoginPage />
+        authMode === "login" ? (
+          <LoginPage 
+            onLogin={handleLogin} 
+            onSwitchToSignup={() => setAuthMode("signup")}
+          />
+        ) : (
+          <SignupPage 
+            onSignup={handleSignup}
+            onSwitchToLogin={() => setAuthMode("login")}
+          />
+        )
       ) : (
         <>
           <Navigation />
-
           {/* Add padding to account for fixed navbar */}
           <div className="pt-16">
             {currentSection === "home" && (
