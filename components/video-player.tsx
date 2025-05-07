@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { X } from "lucide-react";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -33,17 +34,22 @@ export function VideoPlayer({ videoId, title }: VideoPlayerProps) {
       <Dialog
         open={isOpen}
         onOpenChange={(open) => {
-          setIsOpen(open);
+          if (!open) setIsOpen(false);
         }}
         modal
       >
         <DialogContent
           className="sm:max-w-3xl p-0 overflow-hidden bg-black"
-          onPointerDownOutside={(e) => {
-            // Prevent closing when clicking outside
-            e.preventDefault();
-          }}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
         >
+          <button 
+            className="absolute top-2 right-2 z-10 bg-black bg-opacity-50 rounded-full p-1 text-white hover:bg-opacity-70"
+            onClick={() => setIsOpen(false)}
+          >
+            <X size={20} />
+          </button>
           <div className="relative pb-[56.25%] h-0 w-full">
             <iframe
               className="absolute top-0 left-0 w-full h-full"

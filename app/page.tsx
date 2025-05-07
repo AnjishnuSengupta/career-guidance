@@ -98,9 +98,7 @@ export default function Home() {
     }
   };
 
-  // Add this after defining fetchCourseVideos
   useEffect(() => {
-    // Load default videos when the page loads
     fetchCourseVideos();
   }, []);
 
@@ -119,11 +117,11 @@ export default function Home() {
   const [currentUniversityIndex, setCurrentUniversityIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Replace the universities data (around line 110)
+  // Universities
   const universities = [
     {
       name: "Delhi University",
-      image: "https://source.unsplash.com/random/500x300/?university,delhi",
+      image: "https://source.unsplash.com/ZC0EbdLC8G0", // Red Fort Delhi
       tags: ["Academics", "Research", "Co-curriculars"],
       courses: ["B.Com", "B.Tech", "BA", "BSc", "MA", "MSc"],
       location: "New Delhi, India",
@@ -132,8 +130,7 @@ export default function Home() {
     },
     {
       name: "IIT Bombay",
-      image:
-        "https://source.unsplash.com/random/500x300/?university,engineering",
+      image: "https://source.unsplash.com/W6yy0Z9kQAE", // India education
       tags: ["Engineering", "Research", "Technology"],
       courses: ["B.Tech", "M.Tech", "PhD", "MS"],
       location: "Mumbai, India",
@@ -142,8 +139,7 @@ export default function Home() {
     },
     {
       name: "BITS Pilani",
-      image:
-        "https://source.unsplash.com/random/500x300/?university,technology",
+      image: "https://source.unsplash.com/UOJvFvPAYB4", // Engineering students
       tags: ["Engineering", "Business", "Sciences"],
       courses: ["B.Tech", "M.Tech", "MBA", "MSc"],
       location: "Pilani, India",
@@ -152,7 +148,7 @@ export default function Home() {
     },
     {
       name: "St. Stephen's College",
-      image: "https://source.unsplash.com/random/500x300/?college,campus",
+      image: "https://source.unsplash.com/hes6nUC1MVc", // Historic college building
       tags: ["Liberal Arts", "Humanities", "Sciences"],
       courses: ["BA", "BSc", "MA", "MSc"],
       location: "Delhi, India",
@@ -160,6 +156,43 @@ export default function Home() {
       scholarships: "Need-based scholarships available",
     },
   ];
+
+  // testimonials
+  const testimonials = [
+    {
+      id: 1,
+      content:
+        "Pathway helped me discover my true calling in computer science. The career assessment was spot on!",
+      author: "Priya Sharma",
+      role: "B.Tech Student, IIT Delhi",
+      avatar: "https://source.unsplash.com/7YVZYZeITc8", // Indian female student
+    },
+    {
+      id: 2,
+      content:
+        "I was confused between commerce and humanities. The resources here cleared my doubts and helped me make the right choice.",
+      author: "Rahul Mehta",
+      role: "Commerce Student, St. Xavier's College",
+      avatar: "https://source.unsplash.com/d1UPkiFd04A", // Indian male student
+    },
+    {
+      id: 3,
+      content:
+        "The guidance I received was invaluable in shaping my career path. Highly recommend!",
+      author: "Anjali Verma",
+      role: "B.Sc Student, Delhi University",
+      avatar: "https://source.unsplash.com/8manzosRGI4", // Indian female student
+    },
+    {
+      id: 4,
+      content:
+        "Thanks to Pathway, I found the right course for my interests and skills.",
+      author: "Rohit Singh",
+      role: "MBA Student, BITS Pilani",
+      avatar: "https://source.unsplash.com/1n8g8g8g8g8", // Indian male student
+    },
+  ];
+
   // Check if user is first time visitor
   const isFirstTimeUser = () => {
     if (typeof window !== "undefined") {
@@ -609,7 +642,10 @@ export default function Home() {
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div
           className="flex items-center cursor-pointer"
-          onClick={() => setCurrentSection("home")}
+          onClick={() => {
+            setCurrentSection("home");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
         >
           <span className="text-xl font-bold text-purple-600">Pathway</span>
         </div>
@@ -1959,109 +1995,115 @@ export default function Home() {
     </section>
   );
 
-  // First Time User Modal
-  const FirstTimeUserModal = () => (
-    <Dialog
-      open={showFirstTimeModal}
-      onOpenChange={(open) => {
-        // Only allow closing through the Save button
-        if (!open) {
-          // We'll still keep this to allow the button to close it
-          setShowFirstTimeModal(false);
-        }
-      }}
-    >
-      <DialogContent
-        className="sm:max-w-xl"
-        onPointerDownOutside={(e) => {
-          // Prevent closing when clicking outside
-          e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          // Prevent closing with Escape key
-          e.preventDefault();
+  // FirstTimeUserModal
+  const FirstTimeUserModal = () => {
+    // Local state to prevent unexpected closes
+    const [step, setStep] = useState(1);
+
+    return (
+      <Dialog
+        open={showFirstTimeModal}
+        modal
+        onOpenChange={(open) => {
+          // Only allow closing through our buttons
+          if (open === false) {
+            // Don't close the dialog automatically
+            return;
+          }
         }}
       >
-        <DialogHeader>
-          <DialogTitle>Welcome to Pathway!</DialogTitle>
-          <DialogDescription>
-            Let's personalize your experience to help you find the perfect
-            career path.
-          </DialogDescription>
-        </DialogHeader>
+        <DialogContent
+          className="sm:max-w-xl"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Welcome to Pathway!</DialogTitle>
+            <DialogDescription>
+              Let's personalize your experience to help you find the perfect
+              career path.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          <div>
-            <h3 className="text-lg font-medium mb-2">
-              Quick Career Assessment
-            </h3>
-            <p className="text-gray-600 mb-4">
-              What subjects do you enjoy the most?
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                "Mathematics & Physics",
-                "Business & Economics",
-                "Literature & Arts",
-                "Biology & Chemistry",
-              ].map((subject, index) => (
+          <div className="space-y-6 py-4">
+            {/* Step 1 */}
+            {step === 1 && (
+              <div>
+                <h3 className="text-lg font-medium mb-2">
+                  Quick Career Assessment
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  What subjects do you enjoy the most?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    "Mathematics & Physics",
+                    "Business & Economics",
+                    "Literature & Arts",
+                    "Biology & Chemistry",
+                  ].map((subject, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className="justify-start hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300"
+                      onClick={() => setStep(2)}
+                    >
+                      {subject}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2 */}
+            {step === 2 && (
+              <div>
+                <h3 className="text-lg font-medium mb-2">Your Location</h3>
+                <p className="text-gray-600 mb-4">
+                  This helps us recommend nearby institutions
+                </p>
+                <div className="flex space-x-3">
+                  <Input placeholder="City" className="flex-1" />
+                  <Input placeholder="State/Province" className="flex-1" />
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    onClick={() => setStep(3)}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3 */}
+            {step === 3 && (
+              <div>
+                <h3 className="text-lg font-medium mb-2">
+                  Ready to start your journey?
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Your preferences have been saved. Let's begin exploring career
+                  paths!
+                </p>
                 <Button
-                  key={index}
-                  variant="outline"
-                  className="justify-start hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300"
+                  className="w-full bg-purple-600 hover:bg-purple-700 mt-4"
+                  onClick={() => {
+                    // This is where we explicitly close the dialog
+                    setShowFirstTimeModal(false);
+                  }}
                 >
-                  {subject}
+                  Start Exploring
                 </Button>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
-
-          <div>
-            <h3 className="text-lg font-medium mb-2">Your Location</h3>
-            <p className="text-gray-600 mb-4">
-              This helps us recommend nearby institutions
-            </p>
-            <div className="flex space-x-3">
-              <Input placeholder="City" className="flex-1" />
-              <Input placeholder="State/Province" className="flex-1" />
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-medium mb-2">Video Preferences</h3>
-            <p className="text-gray-600 mb-4">
-              What type of educational content interests you?
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                "Career Guidance",
-                "Course Overviews",
-                "Student Experiences",
-                "Industry Insights",
-              ].map((pref, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="justify-start hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300"
-                >
-                  {pref}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button
-            className="w-full bg-purple-600 hover:bg-purple-700"
-            onClick={() => setShowFirstTimeModal(false)}
-          >
-            Save Preferences & Continue
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   // Main content
   return (
