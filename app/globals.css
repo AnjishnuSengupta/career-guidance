@@ -75,7 +75,6 @@
   }
 }
 
-/* Add these styles to your globals.css */
 .prevent-close [data-radix-popper-content-wrapper] {
   pointer-events: auto !important;
 }
@@ -86,4 +85,15 @@
 
 .radix-dialog-content {
   pointer-events: auto !important;
+}
+
+[data-state="open"] > [role="dialog"] {
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+[role="dialog"] {
+  z-index: 50;
+  position: relative;
 }

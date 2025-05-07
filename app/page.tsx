@@ -578,19 +578,28 @@ export default function Home() {
     fetchCourseVideos(result.stream);
   };
 
-  // Handle login
-  const handleLogin = (email: string, password: string) => {
-    console.log("Login attempt with:", email, password);
-    setIsLoggedIn(true);
-    setCurrentSection("home");
-  };
+// handleLogin function
+const handleLogin = (email: string, password: string) => {
+  console.log("Login attempt with:", email, password);
+  setIsLoggedIn(true);
+  setCurrentSection("home");
+  
+  const isFirstTime = !localStorage.getItem("pathway_user_visited");
+  if (isFirstTime) {
+    localStorage.setItem("pathway_user_visited", "true");
+    setShowFirstTimeModal(true);
+  }
+};
 
-  // Handle signup
-  const handleSignup = (email: string, password: string) => {
-    console.log("Signup with:", email, password);
-    setIsLoggedIn(true);
-    setCurrentSection("home");
-  };
+// handleSignup
+const handleSignup = (email: string, password: string) => {
+  console.log("Signup with:", email, password);
+  setIsLoggedIn(true);
+  setCurrentSection("home");
+  
+  localStorage.setItem("pathway_user_visited", "true");
+  setShowFirstTimeModal(true);
+};
 
   // Handle logout
   const handleLogout = () => {

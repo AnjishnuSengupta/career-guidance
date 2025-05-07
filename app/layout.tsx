@@ -10,7 +10,6 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Pathway - Career Guidance for Students",
   description: "Helping students choose the right stream, career and college",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({

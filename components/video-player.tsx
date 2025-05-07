@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { X } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -34,7 +34,10 @@ export function VideoPlayer({ videoId, title }: VideoPlayerProps) {
       <Dialog
         open={isOpen}
         onOpenChange={(open) => {
-          if (!open) setIsOpen(false);
+          // Allow Dialog to close and update our state
+          if (!open) {
+            setIsOpen(false);
+          }
         }}
         modal
       >
@@ -44,9 +47,12 @@ export function VideoPlayer({ videoId, title }: VideoPlayerProps) {
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          <button 
+          <DialogTitle className="sr-only">{title}</DialogTitle>
+
+          <button
             className="absolute top-2 right-2 z-10 bg-black bg-opacity-50 rounded-full p-1 text-white hover:bg-opacity-70"
             onClick={() => setIsOpen(false)}
+            data-close="true"
           >
             <X size={20} />
           </button>
