@@ -1,19 +1,22 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface VideoPlayerProps {
-  videoId: string
-  title: string
+  videoId: string;
+  title: string;
 }
 
 export function VideoPlayer({ videoId, title }: VideoPlayerProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <div className="relative pb-[56.25%] h-0 cursor-pointer" onClick={() => setIsOpen(true)}>
+      <div
+        className="relative pb-[56.25%] h-0 cursor-pointer"
+        onClick={() => setIsOpen(true)}
+      >
         <img
           src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
           alt={title}
@@ -27,8 +30,20 @@ export function VideoPlayer({ videoId, title }: VideoPlayerProps) {
         </div>
       </div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden bg-black">
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          setIsOpen(open);
+        }}
+        modal
+      >
+        <DialogContent
+          className="sm:max-w-3xl p-0 overflow-hidden bg-black"
+          onPointerDownOutside={(e) => {
+            // Prevent closing when clicking outside
+            e.preventDefault();
+          }}
+        >
           <div className="relative pb-[56.25%] h-0 w-full">
             <iframe
               className="absolute top-0 left-0 w-full h-full"
@@ -41,5 +56,5 @@ export function VideoPlayer({ videoId, title }: VideoPlayerProps) {
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }
