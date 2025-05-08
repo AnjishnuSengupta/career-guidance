@@ -3,8 +3,8 @@
 import { ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
-import { signInWithEmailAndPassword } from "firebase/auth"
+import { useState, useEffect } from "react"
+import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 
 interface LoginPageProps {
@@ -17,6 +17,16 @@ export default function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps)
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+
+  // Check if email was saved previously
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("pathway_saved_email")
+    if (savedEmail) {
+      setEmail(savedEmail)
+      setRememberMe(true)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,8 +34,18 @@ export default function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps)
     setIsLoading(true)
     
     try {
+      // Set the persistence based on remember me checkbox
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence)
+      
       // Firebase authentication
       await signInWithEmailAndPassword(auth, email, password)
+      
+      // Save email if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem("pathway_saved_email", email)
+      } else {
+        localStorage.removeItem("pathway_saved_email")
+      }
       
       // Call the parent component's onLogin handler
       onLogin(email, password)
@@ -120,6 +140,8 @@ export default function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps)
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
