@@ -1,4 +1,4 @@
-# Pathway Career Guidance
+# Pathway - Career Guidance [Jaco Tech Fest - 3rd]
 
 A comprehensive tool designed to help individuals navigate their career paths with strategic guidance and resources.
 
