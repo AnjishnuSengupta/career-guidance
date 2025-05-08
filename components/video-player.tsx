@@ -1,72 +1,107 @@
 "use client";
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { X } from "lucide-react";
+import React, { useEffect, useRef } from 'react';
 
 interface VideoPlayerProps {
   videoId: string;
-  title: string;
+  title?: string;
+  width?: string;
+  height?: string;
 }
 
-export function VideoPlayer({ videoId, title }: VideoPlayerProps) {
-  const [isOpen, setIsOpen] = useState(false);
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
+// Make sure this is a default export to match your import in page.tsx
+export default function VideoPlayer({ videoId, title, width = "100%", height = "315" }: VideoPlayerProps) {
+  const playerRef = useRef<HTMLDivElement>(null);
+  const youtubePlayerRef = useRef<any>(null);
+
+  useEffect(() => {
+    // Create a unique container ID for each player instance
+    const containerId = `youtube-player-${videoId}`;
+    
+    // Load YouTube API if not already loaded
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      
+      // Use the first script tag as an insertion point
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      
+      // Set up global callback required by YouTube API
+      window.onYouTubeIframeAPIReady = initializePlayer;
+    } else {
+      // YouTube API is already loaded
+      initializePlayer();
+    }
+    
+    return () => {
+      // Clean up player on unmount
+      if (youtubePlayerRef.current) {
+        try {
+          youtubePlayerRef.current.destroy();
+        } catch (error) {
+          console.error("Error destroying YouTube player:", error);
+        }
+      }
+    };
+  }, [videoId]); // Re-initialize when videoId changes
+
+  function initializePlayer() {
+    if (!playerRef.current) return;
+    
+    try {
+      // Clear previous content if any
+      if (playerRef.current.innerHTML !== '') {
+        playerRef.current.innerHTML = '';
+      }
+      
+      youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
+        videoId: videoId,
+        width: width,
+        height: height,
+        playerVars: {
+          autoplay: 0,
+          controls: 1,
+          modestbranding: 1,
+          rel: 0,
+        },
+        events: {
+          onError: (event: any) => console.error("YouTube Player Error:", event),
+        }
+      });
+    } catch (error) {
+      console.error("Error initializing YouTube player:", error);
+      
+      // Fallback to iframe if YT API fails
+      if (playerRef.current) {
+        playerRef.current.innerHTML = `
+          <iframe 
+            width="${width}" 
+            height="${height}" 
+            src="https://www.youtube.com/embed/${videoId}"
+            title="${title || 'YouTube video player'}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        `;
+      }
+    }
+  }
 
   return (
-    <>
-      <div
-        className="relative pb-[56.25%] h-0 cursor-pointer"
-        onClick={() => setIsOpen(true)}
-      >
-        <img
-          src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-          alt={title}
-          className="absolute top-0 left-0 w-full h-full object-cover"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-16 h-16 bg-white bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-90 transition-all">
-            <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-purple-600 border-b-8 border-b-transparent ml-1"></div>
-          </div>
-        </div>
-      </div>
-
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          // Allow Dialog to close and update our state
-          if (!open) {
-            setIsOpen(false);
-          }
-        }}
-        modal
-      >
-        <DialogContent
-          className="sm:max-w-3xl p-0 overflow-hidden bg-black"
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
-          <DialogTitle className="sr-only">{title}</DialogTitle>
-
-          <button
-            className="absolute top-2 right-2 z-10 bg-black bg-opacity-50 rounded-full p-1 text-white hover:bg-opacity-70"
-            onClick={() => setIsOpen(false)}
-            data-close="true"
-          >
-            <X size={20} />
-          </button>
-          <div className="relative pb-[56.25%] h-0 w-full">
-            <iframe
-              className="absolute top-0 left-0 w-full h-full"
-              src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
-              title={title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+    <div className="video-container">
+      <div ref={playerRef} id={`youtube-player-${videoId}`}></div>
+    </div>
   );
 }
+
+// Add a named export to support both default and named imports
+export { VideoPlayer };
